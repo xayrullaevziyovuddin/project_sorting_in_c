@@ -6,11 +6,9 @@
 
 typedef struct People
 {
-    char *state;
-    char gender;
-    int year;
+
     char *name;
-    int number;
+   
 
 } people;
 
@@ -42,26 +40,18 @@ char *read_line(int fd)
 
 char **split_the_line(char *full_line)
 {
-    int length = 1;
-    char **strings = malloc(sizeof(char *));
-    int len = strlen(full_line);
+    char **strings = malloc(sizeof(char *) * 5); // Максимальное количество полей в строке
+    char *token;
     int i = 0;
-    int start = 0;
 
-    for (i = 0; i < len; i++)
+    token = strtok(full_line, ",");
+    while (token != NULL)
     {
-        if (full_line[i] == ',')
-        {
-            full_line[i] = '\0';
-            length++;
-            strings = realloc(strings, length * sizeof(char *));
-            strings[length - 1] = &full_line[start];
-            start = i + 1;
-        }
+        strings[i] = token;
+        token = strtok(NULL, ",");
+        i++;
     }
-    strings = realloc(strings, (length + 1) * sizeof(char *)); // Добавляем место для последнего элемента
-    strings[length] = &full_line[start]; // Добавляем последний элемент
-
+    
     return strings;
 }
 
@@ -69,8 +59,8 @@ people *load_to_struct(char *full_line)
 {
     people *people1 = malloc(sizeof(people));
     char **data = split_the_line(full_line);
-    people1->name = calloc(strlen(data[3]) + 1, sizeof(char)); // Увеличиваем размер на 1 для нулевого символа
-    strcpy(people1->name, data[4]);
+    people1->name = calloc(strlen(data[2]) + 1, sizeof(char)); // Увеличиваем размер на 1 для нулевого символа
+    strcpy(people1->name, data[3]);
 
     free(full_line);
     return people1;
@@ -107,20 +97,59 @@ people **load_txt_data(char *file_name)
     return people_array;
 }
 
+
+
+void swap(people **arr, int i, int j)
+{
+    people *temp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = temp;
+}
+
+void bubble_sort(people **arr, int size)
+{
+    for (int i = 0; i < size - 1; i++)
+    {
+        for (int j = 0; j < size - i - 1; j++)
+        {
+            if (strcoll(arr[j]->name, arr[j + 1]->name) > 0)
+            {
+                swap(arr, j, j + 1);
+            }
+        }
+    }
+}
+
+
+
+
+
 int main()
 {
     char *file_name = "people.csv";
     people **people_array = load_txt_data(file_name);
 
-    // Example: printing loaded data
+    // Sort the array of people by name
+    int array_size = 0;
+    while (people_array[array_size] != NULL)
+    {
+        array_size++;
+    }
+    bubble_sort(people_array, array_size);
+
+    // Printing loaded data after sorting
     for (int i = 0; people_array[i] != NULL; i++)
     {
         printf("Name: %s\n", people_array[i]->name);
-        // Print other fields as needed
-        free(people_array[i]->name); // Освобождаем память для имени
-        free(people_array[i]); // Освобождаем память для структуры
     }
-    free(people_array); // Освобождаем память для массива указателей
+
+    // Free allocated memory
+    for (int i = 0; people_array[i] != NULL; i++)
+    {
+        free(people_array[i]->name);
+        free(people_array[i]);
+    }
+    free(people_array);
 
     return 0;
 }
